@@ -1,5 +1,5 @@
+﻿#include <fstream>
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <chrono>
@@ -10,44 +10,44 @@ struct RatingData {
 	int id;
 	string title;
 	double rating;
-	RatingData() : id(0), title(""), rating(0.0) {};
 };
 
 void bucketSort(RatingData*& tab, size_t tabSize) {
-	double min = 0.0, max = 0.0;
 	// Ustalamy Min i Max pod zakres
+	double min = 0.0, max = 0.0;
 	for (size_t i = 0; i < tabSize; i++) {
 		if (i == 0) {
-			min = tab[i].rating; // O(1)
-			max = tab[i].rating; // O(1)
+			min = tab[i].rating;
+			max = tab[i].rating;
 		}
 		else {
-			if (tab[i].rating > max) max = tab[i].rating; // O(1)
-			else if (tab[i].rating < min) min = tab[i].rating; // O(1)
+			if (tab[i].rating > max) max = tab[i].rating;
+			else if (tab[i].rating < min) min = tab[i].rating;
 		}
 	}
 
-	size_t numberOfBuckets = static_cast<size_t>(max - min + 1); // O(1)
-	// poniewaz chcemy wartosci od min do max włącznie dlatego tez +1  
-	int* buckets = new int[numberOfBuckets + 1](); // O(liczba kubełków)
-	// +1 dla indeksu aby kubelek 10 byl na miejscu 10
+	size_t numberOfBuckets = static_cast<size_t>(max - min + 1); // poniewaz chcemy wartosci od min do max włącznie dlatego tez +1
+	int* buckets = new int[numberOfBuckets + 1]; // +1 dla indeksu
+
+	for (size_t i = 0; i <= numberOfBuckets; i++) {
+		buckets[i] = 0;
+	} // zapełniamy zerami
 
 	for (size_t i = 0; i < tabSize; i++) {
 		if (tab[i].rating >= 0 && tab[i].rating <= numberOfBuckets) {
-			buckets[static_cast<int>(tab[i].rating)]++; // O(1)
+			buckets[static_cast<int>(tab[i].rating)]++;
 		}
 	} // +1 dla liczb ktore wystepuja w tablicy
 
 	size_t k = 0;
 	for (size_t i = 0; i <= numberOfBuckets; i++) {
 		for (size_t j = buckets[i]; j > 0; j--) {
-			tab[k++].rating = static_cast<double>(i); // O(n)
+			tab[k++].rating = static_cast<double>(i);
 		}
 	} // przypisanie ( nie sortowanie ) do tablicy w zaleznosci 
 	// od tego ile razy wystepuje ( wartosc kubełka na danym indeksie )
 
-	delete[] buckets; // O(1)
-	// sprzątanie
+	delete[] buckets; // sprzątanie
 }
 
 void readFile(RatingData*& ratings, int& max) {
@@ -94,27 +94,32 @@ void readFile(RatingData*& ratings, int& max) {
 int main() {
 	RatingData* ratings;
 	int max;
-
 	readFile(ratings, max);
-
 	const int sortingSize[5]{ 10000, 100000, 500000, 1000000, max };
+	float avr;
 	for (size_t i = 0; i < 5; i++) {
-		int value = sortingSize[i];
-		if (value > max) {
-			value = max;
-		}
+		avr = 0.0;
+		for (size_t j = 0; j < 3; j++) {
+			int value = sortingSize[i];
+			if (value > max) {
+				value = max;
+			}
 			auto start = chrono::steady_clock::now();
 			bucketSort(ratings, value);
 			auto end = chrono::steady_clock::now();
 			auto elapsed_ms = chrono::duration_cast<chrono::microseconds>(end - start);
-		if (i == 0) {
-			cout << "Sorted Ratings:\n";
-			for (size_t j = 0; j < sortingSize[i]; j++) {
-				cout << "Rating: " << ratings[j].rating << ", Title: " << ratings[j].title << endl;
+			avr += static_cast<double>(elapsed_ms.count()) / 1000000;
+			if (i == 0 && j == 0) {
+				cout << "Sorted Ratings:\n";
+				for (size_t k = 0; k < sortingSize[i]; k++) {
+					cout << "Rating: " << ratings[k].rating << ", Title: " << ratings[k].title << endl;
+				}
+				cout << endl;
 			}
-			cout << endl;
+			if (j == 2) {
+				cout << "Ilosc: " << sortingSize[i] << " Czas: " << fixed << setprecision(4) << avr / 3 << " sekund" << endl;
+			}
 		}
-		cout << "Ilosc: " << sortingSize[i] << " Czas: " << fixed << setprecision(4) << static_cast<double>(elapsed_ms.count()) / 1000000 << " sekundy" << endl;
 	}
 	delete[] ratings;
 }
